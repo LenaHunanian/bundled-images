@@ -19,7 +19,6 @@ class ViewController: UIViewController {
     
     //UI components
     private let titleLabel = UILabel()
-    private var config : Config?
     private let scrollView = UIScrollView()
     private let stackView = UIStackView()
     
@@ -29,8 +28,10 @@ class ViewController: UIViewController {
         view.backgroundColor = .systemBackground
         setupTitleLabel()
         setupScrollViewAndStackView()
-        loadConfiguration()
-        loadConfiguredImages()
+        if let config = loadConfiguration() {
+        titleLabel.text = config.title
+        loadConfiguredImages(from: config)
+        }
     }
     
     private func setupTitleLabel() {
@@ -75,24 +76,21 @@ class ViewController: UIViewController {
     
     //MARK: - loading config from JSON
     
-    private func loadConfiguration() {
+    private func loadConfiguration() -> Config? {
         guard let url = Bundle.main.url(forResource: "Config", withExtension: "json") else {
             print("Configuration file not found")
-            return
+            return nil
         }
         do {
             let data = try Data(contentsOf: url)
             let decoder = JSONDecoder()
-            let decodedConfig = try decoder.decode(Config.self, from: data)
-            self.config = decodedConfig
-            self.titleLabel.text = decodedConfig.title
+            return try decoder.decode(Config.self, from: data)
         }catch {
             print("failed to decode Configuration")
+            return nil
         }
     }
-    private func loadConfiguredImages() {
-        guard let config = config else {return}
-        
+    private func loadConfiguredImages(from config: Config) {
         let imagesToLoad = Array(config.images.prefix(config.maxVisibleImages))
         
         for image in imagesToLoad {
